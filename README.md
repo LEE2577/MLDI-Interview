@@ -1,6 +1,22 @@
 # TextVQA Qwen3-VL LoRA Baseline
 
-This repository contains a small VLM fine-tuning baseline for TextVQA. It fine-tunes `Qwen3-VL-2B-Instruct` with LoRA and is intended to run on 2 x 2080Ti within 1 hour.
+This repository contains a small VLM fine-tuning baseline for TextVQA. The current implementation fine-tunes `Qwen3-VL-2B-Instruct` with LoRA, but submissions may use any training structure or adaptation method.
+
+## Requirements
+
+- Training must finish within 1 hour on 2 x 2080Ti.
+- Test-time latency and FLOPs must be no more than 1.1x the original base model.
+- The submitted model may use LoRA, full fine-tuning, adapters, prompt tuning, or another method, as long as the evaluation budget is respected.
+- Final results should be reported over 3 seeds.
+
+The final submission should include:
+
+- `README.md`
+- `run_prepare.sh`
+- `run_train.sh`
+- `eval_qwen.sh`
+- Merge script if needed, for example `run_merge_lora.sh` and `merge_lora.py`
+- Any required config and source files used by those scripts
 
 ## Files
 
