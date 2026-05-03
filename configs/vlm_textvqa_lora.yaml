@@ -1,0 +1,36 @@
+model_path: /storage/data/shiyd2023/LLM_model/Qwen3-VL-2B-Instruct
+data_path: /storage/data/shiyd2023/datasets/textvqa/default/train/*.parquet
+prepared_data_dir: ./data/prepared_textvqa_qwen3vl_seed{seed}
+output_dir: ./outputs/textvqa_qwen3vl_lora_seed{seed}
+
+seed: 1
+max_train_samples: 4096
+max_steps: 260
+max_train_seconds: 3600
+
+max_pixels: 200704
+min_pixels: 100352
+max_seq_length: 1024
+attn_implementation: eager
+use_ocr_tokens: false
+max_ocr_tokens: 16
+
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 8
+learning_rate: 0.0003
+warmup_ratio: 0.05
+weight_decay: 0.0
+logging_steps: 5
+dataloader_num_workers: 2
+
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+  - gate_proj
+  - up_proj
+  - down_proj
