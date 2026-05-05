@@ -1,9 +1,15 @@
-torch
-transformers
-accelerate
-peft
-datasets
-Pillow
-PyYAML
-qwen-vl-utils
-tqdm
+# Core dependencies for TextVQA Qwen3-VL LoRA baseline
+# Python 3.13.5, CUDA 12.4
+
+torch==2.6.0+cu124
+transformers==4.57.0
+accelerate==1.7.0
+peft==0.15.2
+datasets==3.6.0
+Pillow==11.0.0
+PyYAML==6.0.2
+qwen-vl-utils==0.0.14
+tqdm==4.67.1
+
+# Evaluation (installed from local lmms-eval/ directory)
+# cd lmms-eval && pip install -e .
