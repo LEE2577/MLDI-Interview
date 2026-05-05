@@ -67,6 +67,23 @@ This LoRA fine-tuning baseline achieves the following on `textvqa_val` across 3 
 
 > This is a simple baseline. Students are expected to surpass this score. Achieving a comparable result with better code quality and innovative ideas is also acceptable.
 
+## Setup
+
+### Environment
+
+You may use the pre-configured shared environment, or install dependencies yourself:
+
+```bash
+pip install -r requirements.txt
+cd lmms-eval && pip install -e . && cd ..
+```
+
+> If you install your own environment, **include your `requirements.txt`** in the submission.
+
+### Coding Style
+
+You are free to use any workflow — including vibe coding tools like Claude Code, Cursor, GitHub Copilot, etc. — as long as the submitted code is clean, reproducible, and runs correctly.
+
 ## Quick Start
 
 ### 1. Prepare data
