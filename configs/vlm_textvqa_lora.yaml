@@ -17,8 +17,8 @@ max_ocr_tokens: 16
 
 per_device_train_batch_size: 1
 gradient_accumulation_steps: 8
-learning_rate: 0.0003
-warmup_ratio: 0.05
+learning_rate: 0.00001
+warmup_ratio: 0.003
 weight_decay: 0.0
 logging_steps: 5
 dataloader_num_workers: 2

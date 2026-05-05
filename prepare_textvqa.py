@@ -2,16 +2,17 @@
 import argparse
 import json
 import os
-import re
-import string
 from collections import Counter
 from glob import glob
 
 import yaml
 from datasets import Dataset
 
+from lmms_eval.tasks._task_utils.vqa_eval_metric import EvalAIAnswerProcessor
+
 
 DEFAULT_CONFIG = "configs/vlm_textvqa_lora.yaml"
+EVAL_ANSWER_PROCESSOR = EvalAIAnswerProcessor()
 
 
 def load_config(path):
@@ -24,9 +25,15 @@ def load_config(path):
 
 
 def normalize_answer(answer):
-    answer = str(answer).lower().strip()
-    answer = answer.translate(str.maketrans("", "", string.punctuation))
-    return re.sub(r"\s+", " ", answer)
+    return EVAL_ANSWER_PROCESSOR(answer)
+
+
+def textvqa_accuracy(candidate, references):
+    scores = []
+    for i in range(len(references)):
+        other_answers = [references[j] for j in range(len(references)) if i != j]
+        scores.append(min(1.0, other_answers.count(candidate) / 3.0))
+    return sum(scores) / len(scores) if scores else 0.0
 
 
 def choose_answer(answers):
@@ -35,7 +42,8 @@ def choose_answer(answers):
     normalized = [normalize_answer(ans) for ans in answers if str(ans).strip()]
     if not normalized:
         return ""
-    return Counter(normalized).most_common(1)[0][0]
+    counts = Counter(normalized)
+    return max(counts, key=lambda ans: (textvqa_accuracy(ans, normalized), counts[ans], -normalized.index(ans)))
 
 
 def build_question(item, use_ocr, max_ocr_tokens):
