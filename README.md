@@ -54,6 +54,19 @@ The original `Qwen3-VL-2B-Instruct` (without fine-tuning) achieves the following
 |-------|-------------|
 | Qwen3-VL-2B-Instruct | **69.84%** |
 
+## Baseline (LoRA Fine-tuned) Performance
+
+This LoRA fine-tuning baseline achieves the following on `textvqa_val` across 3 seeds:
+
+| Seed | exact_match |
+|------|-------------|
+| 1    | 70.63%      |
+| 2    | 70.73%      |
+| 3    | 70.67%      |
+| **Mean** | **70.68%** |
+
+> This is a simple baseline. Students are expected to surpass this score. Achieving a comparable result with better code quality and innovative ideas is also acceptable.
+
 ## Quick Start
 
 ### 1. Prepare data
