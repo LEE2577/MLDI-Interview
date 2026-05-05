@@ -2,6 +2,8 @@
 
 This repository contains a small VLM fine-tuning baseline for TextVQA. The current implementation fine-tunes `Qwen3-VL-2B-Instruct` with LoRA, but submissions may use any training structure or adaptation method.
 
+**Deadline:** 3 days.
+
 ## Requirements
 
 - Training must finish within 1 hour on 2 x 2080Ti.
@@ -32,26 +34,35 @@ The final submission should include:
 
 The default config uses:
 
+- **Model:** `Qwen3-VL-2B-Instruct` (local path or Hugging Face)
+- **Dataset:** TextVQA from Hugging Face (`lmms-lab/textvqa`). You can also point `data_path` in the config to local `*.parquet` files.
+
 ```yaml
-model_path: /storage/data/shiyd2023/LLM_model/Qwen3-VL-2B-Instruct
-data_path: /storage/data/shiyd2023/datasets/textvqa/default/train/*.parquet
+model_path: Qwen/Qwen3-VL-2B-Instruct
+data_path: lmms-lab/textvqa
 ```
 
 Prepared data is saved under `data/prepared_textvqa_qwen3vl_seed{seed}`. Training outputs are saved under `outputs/textvqa_qwen3vl_lora_seed{seed}`.
 
 The default prompt does not include dataset-provided OCR tokens.
 
-## Prepare
+## Base Model Performance
 
-Prepare the cached training set before training:
+The original `Qwen3-VL-2B-Instruct` (without fine-tuning) achieves the following on `textvqa_val`:
+
+| Model | exact_match |
+|-------|-------------|
+| Qwen3-VL-2B-Instruct | **69.84%** |
+
+## Quick Start
+
+### 1. Prepare data
 
 ```bash
 SEED=1 bash run_prepare.sh
 ```
 
-## Train
-
-Run the default 2-GPU training job:
+### 2. Train
 
 ```bash
 SEED=1 bash run_train.sh
@@ -68,9 +79,7 @@ done
 
 Training is controlled by `max_steps` and `max_train_seconds` in `configs/vlm_textvqa_lora.yaml`.
 
-## Merge LoRA
-
-Merge the trained adapter into a full model directory:
+### 3. Merge LoRA
 
 ```bash
 SEED=1 bash run_merge_lora.sh
@@ -78,12 +87,16 @@ SEED=1 bash run_merge_lora.sh
 
 The merged model is saved to `outputs/textvqa_qwen3vl_lora_seed1/merged` by default.
 
-## Evaluate
+### 4. Evaluate
 
-Evaluate a merged model directory:
+Evaluate the merged model:
 
 ```bash
 MODEL_PATH=./outputs/textvqa_qwen3vl_lora_seed1/merged bash eval_qwen.sh
 ```
 
-If `MODEL_PATH` is not set, evaluation uses the base Qwen3-VL model path from the script.
+Evaluate the base model:
+
+```bash
+MODEL_PATH=/storage/data/shiyd2023/LLM_model/Qwen3-VL-2B-Instruct bash eval_qwen.sh
+```
