@@ -130,5 +130,5 @@ MODEL_PATH=./outputs/textvqa_qwen3vl_lora_seed1/merged bash eval_qwen.sh
 Evaluate the base model:
 
 ```bash
-MODEL_PATH=/storage/data/shiyd2023/LLM_model/Qwen3-VL-2B-Instruct bash eval_qwen.sh
+MODEL_PATH=Qwen/Qwen3-VL-2B-Instruct bash eval_qwen.sh
 ```
