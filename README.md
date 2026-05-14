@@ -6,7 +6,7 @@ This repository contains a small VLM fine-tuning baseline for TextVQA. The curre
 
 ## Requirements
 
-- Training must finish within 1 hour on 2 x 2080Ti.
+- Training must finish within 1 hour on 2080Ti (1 or 2 GPUs are both acceptable).
 - Test-time latency and FLOPs must be no more than 1.1x the original base model.
 - The submitted model may use LoRA, full fine-tuning, adapters, prompt tuning, or another method, as long as the evaluation budget is respected.
 - Final results should be reported over 3 seeds.
@@ -67,6 +67,8 @@ This LoRA fine-tuning baseline achieves the following on `textvqa_val` across 3 
 
 > This is a simple baseline. Students are expected to surpass this score. Achieving a comparable result with better code quality and innovative ideas is also acceptable.
 
+> **Note on GPU environment:** The baseline results above were obtained using 2 GPUs. This is provided for reference only. If you only have a single-GPU environment, don't worry — we will fairly compare your code against this simple LoRA baseline using a single GPU as well.
+
 ## Setup
 
 ### Environment
@@ -82,7 +84,7 @@ cd lmms-eval && pip install -e . && cd ..
 
 ### Coding Style
 
-You are free to use any workflow — including vibe coding tools like Claude Code, Cursor, GitHub Copilot, etc. — as long as the submitted code is clean, reproducible, and runs correctly.
+You are free to use any workflow (including vibe coding tools like Claude Code, Cursor, GitHub Copilot, etc.) as long as the submitted code is clean, reproducible, and runs correctly.
 
 ## Quick Start
 
