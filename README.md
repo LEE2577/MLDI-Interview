@@ -72,7 +72,7 @@ Added LoRA adapters to the vision encoder in addition to the language model. EM 
 ### Exp 3 — OCR Deduplication
 Applied deduplication to OCR token sequences before training. EM reached **70.52%**, marginally above baseline. More notably, shorter prompts reduced total inference time by ~100 s, pushing throughput to **6.54 tokens/s** (+3.3%), well within the ≤1.1× latency budget.
 
-### Exp 4 — MoE-LoRA, OCR=false ✅ Best
+### Exp 4 — MoE-LoRA ✅ Best
 Replaced standard LoRA with a Mixture-of-Experts LoRA. With OCR input disabled, the model relies entirely on its own visual understanding. This achieved the highest EM of **70.66%** — nearly matching the official dual-GPU baseline (70.68%) on a single mobile GPU. Inference speed (6.47 tokens/s) satisfies the latency constraint.
 
 ---
