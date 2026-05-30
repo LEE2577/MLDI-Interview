@@ -1,7 +1,5 @@
  bash command:
  SEED=1 bash run_prepare.sh && SEED=1 HARD_RATIO=0.5 bash run_hard_mining.sh && SEED=1 bash run_train.sh && SEED=1 bash run_merge_lora.sh && MODEL_PATH=./outputs/textvqa_qwen3vl_lora_seed1/merged bash eval_qwen.sh
- SEED=1 bash run_prepare.sh && SEED=1 bash run_train.sh && SEED=1 bash run_merge_lora.sh && MODEL_PATH=./outputs/textvqa_qwen3vl_lora_seed1/merged bash eval_qwen.sh
- SEED=1 bash run_measure.sh
  for seed in 2 3; do SEED=$seed bash run_train.sh && SEED=$seed bash run_merge_lora.sh && MODEL_PATH=./outputs/textvqa_qwen3vl_lora_seed${seed}/merged bash eval_qwen.sh; done
  
  Device: GeForce RTX 4060 Laptop
@@ -89,14 +87,13 @@ Throughput Summary
 
  hyperparameter:
  max_train_samples: 40960
- max_pixels: 200704 → 262144 401408 yes
- min_pixels: 100352 → 131072 200704 yes
- lora_r: 16 → 32 
+ max_pixels: 200704 → 262144 401408
+ min_pixels: 100352 → 131072 200704
  lora_alpha: 32 → 64
  learning_rate: 0.00001 → 0.00002
  max_seq_length: 1024 → 512
  max_ocr_tokens: 16 → 50
- attn_implementation: eager → "flash_attention_2" yes
+ attn_implementation: eager → "flash_attention_2" 
  warmup_ratio: 0.003 → 0.03 
  新增一行：lr_scheduler_type: cosine yes
 

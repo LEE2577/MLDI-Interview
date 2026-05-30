@@ -1,22 +1,26 @@
 # TextVQA Qwen3-VL-2B Fine-tuning: Experiment Report
 
 ## Environment
-
 | Item | Details |
 |---|---|
 | GPU | GeForce RTX 4060 Laptop (single GPU) |
-| Reference baseline | 2× RTX 2080Ti (official) |
 | Base model | Qwen3-VL-2B-Instruct |
-| Metric | Exact Match (EM) + Inference Throughput |
 
 ---
+
+## Setup
+ 
+```bash
+pip install -r requirements.txt
+cd lmms-eval && pip install -e . && cd ..
+```
 
 ## Pipeline
 
 ```bash
-# Data preparation + hard mining
+# Data preparation
 SEED=1 bash run_prepare.sh
-SEED=1 HARD_RATIO=0.5 bash run_hard_mining.sh
+#SEED=1 HARD_RATIO=0.5 bash run_hard_mining.sh
 
 # Train → merge → evaluate
 SEED=1 bash run_train.sh
@@ -35,18 +39,6 @@ for seed in 1 2 3; do
 done
 ```
 
----
-
-## Model Configuration
-
-| Item | Value |
-|---|---|
-| Trainable parameters | 17,432,576 |
-| Total parameters | 2,144,964,608 |
-| Trainable % | 0.8127% |
-
----
-
 ## Results
 
 ### Exact Match on textvqa_val
@@ -56,8 +48,6 @@ done
 | Base model (no fine-tuning) | 69.84% | — |
 | **Official LoRA baseline** (2×2080Ti, mean of 3 seeds) | **70.68%** | — |
 | Baseline LoRA (this repo, seed=1) | 70.51% | — |
-| + DoRA + OCR tokens | 69.99% | −0.52% |
-| + Vision encoder LoRA | 70.26% | −0.25% |
 | + OCR deduplication | 70.52% | +0.01% |
 | **MoE-LoRA (OCR=false)** ✅ | **70.66%** | **+0.15%** |
 
@@ -108,7 +98,10 @@ Replaced standard LoRA with a Mixture-of-Experts LoRA. With OCR input disabled, 
 | `run_merge_lora.sh` | Merge LoRA adapter into base model |
 | `run_measure.sh` | Inference throughput benchmark |
 | `eval_qwen.sh` | TextVQA evaluation via lmms-eval |
-| `merge_lora.py` | LoRA merge script |
-| `configs/vlm_textvqa_lora.yaml` | Training configuration |
 | `prepare_textvqa.py` | Data preparation script |
+| `prepare_hard_mining.py` | Hard example mining data prep script |
 | `train_textvqa_qwen3vl.py` | Fine-tuning script |
+| `moe_lora.py` | MoE-LoRA implementation (4 experts, top-k=2 sparse routing) |
+| `merge_lora.py` | LoRA merge script |
+| `measure_efficiency.py` | Inference throughput measurement script |
+| `configs/vlm_textvqa_lora.yaml` | Training config|
