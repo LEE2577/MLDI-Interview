@@ -49,11 +49,13 @@ def choose_answer(answers):
 def build_question(item, use_ocr, max_ocr_tokens):
     question = item["question"].strip().capitalize()
     if use_ocr:
-        ocr_tokens = [str(tok) for tok in item.get("ocr_tokens", []) if str(tok).strip()]
+        seen = set()
+        ocr_tokens = [str(tok) for tok in item.get("ocr_tokens", []) if str(tok).strip() and not (str(tok).lower() in seen or seen.add(str(tok).lower()))]
         if max_ocr_tokens > 0:
             ocr_tokens = ocr_tokens[:max_ocr_tokens]
         if ocr_tokens:
-            question += "\nReference OCR token: " + ", ".join(ocr_tokens)
+            ocr_text = " ".join(ocr_tokens)
+            return f"The image contains the following text: {ocr_text}.\n{question}\nAnswer the question using a single word or phrase."
     return question + "\nAnswer the question using a single word or phrase."
 
 
@@ -77,7 +79,15 @@ def main():
     max_ocr_tokens = int(cfg.get("max_ocr_tokens", 16))
 
     def add_training_fields(item):
+        answers = item.get("answers", [])
+        if not isinstance(answers, list):
+            answers = [answers]
+        normalized = [normalize_answer(a) for a in answers if str(a).strip()]
+        # deduplicate preserving order
+        seen = set()
+        deduped = [a for a in normalized if not (a in seen or seen.add(a))]
         item["target_answer"] = choose_answer(item["answers"])
+        item["all_answers"] = deduped if deduped else [item["target_answer"]]
         item["user_text"] = build_question(item, use_ocr, max_ocr_tokens)
         return item
 

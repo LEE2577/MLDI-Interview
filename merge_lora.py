@@ -4,7 +4,7 @@ import os
 
 import torch
 from peft import PeftModel
-from transformers import AutoModelForVision2Seq, AutoProcessor
+from transformers import AutoModelForImageTextToText, AutoProcessor
 
 
 def main():
@@ -22,15 +22,21 @@ def main():
     }
     dtype = dtype_map[args.dtype]
 
-    model = AutoModelForVision2Seq.from_pretrained(
+    model = AutoModelForImageTextToText.from_pretrained(
         args.base_model,
         trust_remote_code=True,
         torch_dtype=dtype,
         device_map="cpu",
         low_cpu_mem_usage=True,
     )
-    model = PeftModel.from_pretrained(model, args.adapter)
-    model = model.merge_and_unload()
+
+    moe_cfg = os.path.join(args.adapter, "moe_lora_config.json")
+    if os.path.exists(moe_cfg):
+        from moe_lora import load_and_merge_moe_lora
+        model = load_and_merge_moe_lora(model, args.adapter)
+    else:
+        model = PeftModel.from_pretrained(model, args.adapter)
+        model = model.merge_and_unload()
 
     os.makedirs(args.output, exist_ok=True)
     model.save_pretrained(args.output, safe_serialization=True)

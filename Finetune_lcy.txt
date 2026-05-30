@@ -1,0 +1,111 @@
+ bash command:
+ SEED=1 bash run_prepare.sh && SEED=1 HARD_RATIO=0.5 bash run_hard_mining.sh && SEED=1 bash run_train.sh && SEED=1 bash run_merge_lora.sh && MODEL_PATH=./outputs/textvqa_qwen3vl_lora_seed1/merged bash eval_qwen.sh
+ SEED=1 bash run_prepare.sh && SEED=1 bash run_train.sh && SEED=1 bash run_merge_lora.sh && MODEL_PATH=./outputs/textvqa_qwen3vl_lora_seed1/merged bash eval_qwen.sh
+ SEED=1 bash run_measure.sh
+ for seed in 2 3; do SEED=$seed bash run_train.sh && SEED=$seed bash run_merge_lora.sh && MODEL_PATH=./outputs/textvqa_qwen3vl_lora_seed${seed}/merged bash eval_qwen.sh; done
+ 
+ Device: GeForce RTX 4060 Laptop
+
+ baseline:
+ trainable params: 17,432,576 || all params: 2,144,964,608 || trainable%: 0.8127
+|   Tasks   |Filter|n-shot|  Metric   |   |Value |   |Stderr|Stderr_CLT|
+|-----------|------|-----:|-----------|---|------|---|------|----------|
+|textvqa_val|none  |     0|exact_match|↑  |0.7051|±  |0.0061|    0.0061|
+|textvqa_val|none  |     0|submission |↑  |N/A   |±  |N/A   |N/A       |
+
+Throughput Summary
+
+|      Metric      |  Value   |  Unit  |
+|------------------|---------:|--------|
+|total_gen_tokens  |18654.0000|tokens  |
+|total_elapsed_time| 2946.8074|seconds |
+|avg_speed         |    6.3302|tokens/s|
+|avg_rank          |    0.0000|varies  |
+
+Improvements:
+ LoRA → DoRA+OCR:0.6999
+
+ Vision+LoRA:0.7026
+
+ OCR去重:
+|   Tasks   |Filter|n-shot|  Metric   |   |Value |   |Stderr|Stderr_CLT|
+|-----------|------|-----:|-----------|---|------|---|------|----------|
+|textvqa_val|none  |     0|exact_match|↑  |0.7052|±  |0.0061|    0.0061|
+|textvqa_val|none  |     0|submission |↑  |N/A   |±  |N/A   |N/A       |
+
+
+Throughput Summary
+
+|      Metric      |  Value   |  Unit  |
+|------------------|---------:|--------|
+|total_gen_tokens  |18626.0000|tokens  |
+|total_elapsed_time| 2849.1913|seconds |
+|avg_speed         |    6.5373|tokens/s|
+|avg_rank          |    0.0000|varies  |
+
+ MoE-LoRA(OCR=false):
+1.target_modules:
+  - gate_proj
+  - up_proj
+  - down_proj
+|   Tasks   |Filter|n-shot|  Metric   |   |Value|   |Stderr|Stderr_CLT|
+|-----------|------|-----:|-----------|---|-----|---|------|----------|
+|textvqa_val|none  |     0|exact_match|↑  |0.706|±  |0.0061|    0.0061|
+|textvqa_val|none  |     0|submission |↑  |N/A  |±  |N/A   |N/A       |
+
+
+Throughput Summary
+
+|      Metric      |  Value   |  Unit  |
+|------------------|---------:|--------|
+|total_gen_tokens  |19263.0000|tokens  |
+|total_elapsed_time| 2987.4388|seconds |
+|avg_speed         |    6.4480|tokens/s|
+|avg_rank          |    0.0000|varies  |
+
+2.target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+  - gate_proj
+  - up_proj
+  - down_proj
+
+
+3.target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+|   Tasks   |Filter|n-shot|  Metric   |   |Value |   |Stderr|Stderr_CLT|
+|-----------|------|-----:|-----------|---|------|---|------|----------|
+|textvqa_val|none  |     0|exact_match|↑  |0.7044|±  |0.0061|    0.0061|
+|textvqa_val|none  |     0|submission |↑  |N/A   |±  |N/A   |N/A       |
+
+ hard miniing：
+
+
+
+ hyperparameter:
+ max_train_samples: 40960
+ max_pixels: 200704 → 262144 401408 yes
+ min_pixels: 100352 → 131072 200704 yes
+ lora_r: 16 → 32 
+ lora_alpha: 32 → 64
+ learning_rate: 0.00001 → 0.00002
+ max_seq_length: 1024 → 512
+ max_ocr_tokens: 16 → 50
+ attn_implementation: eager → "flash_attention_2" yes
+ warmup_ratio: 0.003 → 0.03 
+ 新增一行：lr_scheduler_type: cosine yes
+
+ results:
+
+ 
+
+
+
+
+
+ 

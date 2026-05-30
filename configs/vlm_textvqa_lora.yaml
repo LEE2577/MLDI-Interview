@@ -1,5 +1,5 @@
-model_path: /storage/data/shiyd2023/LLM_model/Qwen3-VL-2B-Instruct
-data_path: /storage/data/shiyd2023/datasets/textvqa/default/train/*.parquet
+model_path: ./models/Qwen3-VL-2B-Instruct
+data_path: ./data/textvqa_hf/data/train-*.parquet
 prepared_data_dir: ./data/prepared_textvqa_qwen3vl_seed{seed}
 output_dir: ./outputs/textvqa_qwen3vl_lora_seed{seed}
 
@@ -8,12 +8,13 @@ max_train_samples: 40960
 max_steps: 1024
 max_train_seconds: 3600
 
-max_pixels: 200704
-min_pixels: 100352
+max_pixels: 401408
+min_pixels: 200704
 max_seq_length: 1024
 attn_implementation: eager
 use_ocr_tokens: false
-max_ocr_tokens: 16
+max_ocr_tokens: 50
+multi_answer: false
 
 per_device_train_batch_size: 1
 gradient_accumulation_steps: 8
@@ -23,14 +24,19 @@ weight_decay: 0.0
 logging_steps: 5
 dataloader_num_workers: 2
 
+lr_scheduler_type: cosine
+
+unfreeze_visual_merger: false
+use_hard_mining: false
+
 lora_r: 16
 lora_alpha: 32
 lora_dropout: 0.05
+use_dora: false
+use_moe_lora: true
+moe_num_experts: 4
+moe_top_k: 2      # null = dense mixture; set integer for sparse top-k routing
 target_modules:
-  - q_proj
-  - k_proj
-  - v_proj
-  - o_proj
   - gate_proj
   - up_proj
   - down_proj

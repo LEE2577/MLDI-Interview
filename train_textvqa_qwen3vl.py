@@ -2,6 +2,7 @@
 import argparse
 import json
 import os
+import random
 import time
 
 import torch
@@ -9,7 +10,7 @@ import yaml
 from datasets import load_from_disk
 from peft import LoraConfig, get_peft_model
 from torch.nn.utils.rnn import pad_sequence
-from transformers import AutoModelForVision2Seq, AutoProcessor, Trainer, TrainerCallback, TrainingArguments, set_seed
+from transformers import AutoModelForImageTextToText, AutoProcessor, Trainer, TrainerCallback, TrainingArguments, set_seed
 
 
 DEFAULT_CONFIG = "configs/vlm_textvqa_lora.yaml"
@@ -27,13 +28,22 @@ def load_config(path):
 
 
 def load_prepared_dataset(cfg):
-    if not os.path.isdir(cfg["prepared_data_dir"]):
+    base_dir = cfg["prepared_data_dir"]
+    if not os.path.isdir(base_dir):
         raise FileNotFoundError(
-            f"Prepared dataset not found: {cfg['prepared_data_dir']}. "
+            f"Prepared dataset not found: {base_dir}. "
             f"Run `python prepare_textvqa.py --config {DEFAULT_CONFIG}` first."
         )
-    ds = load_from_disk(cfg["prepared_data_dir"])
-    print(f"[INFO] Loaded {len(ds)} prepared TextVQA samples from {cfg['prepared_data_dir']}")
+    if cfg.get("use_hard_mining", False):
+        hard_dir = os.path.join(base_dir, "hard_subset")
+        if os.path.isdir(hard_dir):
+            ds = load_from_disk(hard_dir)
+            print(f"[INFO] Hard mining: loaded {len(ds)} hard samples from {hard_dir}")
+            return ds
+        print(f"[WARN] use_hard_mining=true but hard_subset not found at {hard_dir}. "
+              f"Run `python prepare_hard_mining.py` first. Falling back to full dataset.")
+    ds = load_from_disk(base_dir)
+    print(f"[INFO] Loaded {len(ds)} prepared TextVQA samples from {base_dir}")
     return ds
 
 
@@ -61,7 +71,10 @@ class TextVQADataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         item = self.ds[idx]
         image = item["image"].convert("RGB")
-        answer = item["target_answer"]
+        if self.cfg.get("multi_answer", False) and item.get("all_answers"):
+            answer = random.choice(item["all_answers"])
+        else:
+            answer = item["target_answer"]
         user_text = item["user_text"]
 
         prompt_conv = [
@@ -93,6 +106,8 @@ class TextVQADataset(torch.utils.data.Dataset):
             result["pixel_values"] = full_batch["pixel_values"]
         if "image_grid_thw" in full_batch:
             result["image_grid_thw"] = full_batch["image_grid_thw"]
+        if "mm_token_type_ids" in full_batch:
+            result["mm_token_type_ids"] = full_batch["mm_token_type_ids"][0]
         return result
 
 
@@ -111,6 +126,8 @@ def collate_fn(examples, processor):
         batch["pixel_values"] = torch.cat([ex["pixel_values"] for ex in examples], dim=0)
     if "image_grid_thw" in examples[0]:
         batch["image_grid_thw"] = torch.cat([ex["image_grid_thw"] for ex in examples], dim=0)
+    if "mm_token_type_ids" in examples[0]:
+        batch["mm_token_type_ids"] = pad_sequence([ex["mm_token_type_ids"] for ex in examples], batch_first=True, padding_value=0)
     return batch
 
 
@@ -127,29 +144,56 @@ def main():
         max_pixels=int(cfg["max_pixels"]),
         min_pixels=int(cfg["min_pixels"]),
     )
-    model = AutoModelForVision2Seq.from_pretrained(
+    model = AutoModelForImageTextToText.from_pretrained(
         cfg["model_path"],
         trust_remote_code=True,
-        torch_dtype=torch.float16,
+        dtype=torch.float16,
         attn_implementation=cfg.get("attn_implementation", "eager"),
         low_cpu_mem_usage=True,
     )
     model.config.use_cache = False
 
-    if hasattr(model, "visual"):
-        for param in model.visual.parameters():
+    if cfg.get("use_moe_lora", False):
+        from moe_lora import inject_moe_lora
+        from moe_lora import print_trainable_parameters as _print_params
+        # Freeze all base params first (mirrors what get_peft_model does internally)
+        for param in model.parameters():
             param.requires_grad = False
+        if cfg.get("unfreeze_visual_merger", False):
+            model.model.visual.merger.to(torch.float32)
+            for param in model.model.visual.merger.parameters():
+                param.requires_grad = True
+            print("[INFO] Visual merger upcast to FP32 and unfrozen for direct fine-tuning")
+        n_replaced = inject_moe_lora(
+            model,
+            target_modules=cfg["target_modules"],
+            r=int(cfg["lora_r"]),
+            lora_alpha=float(cfg["lora_alpha"]),
+            lora_dropout=float(cfg.get("lora_dropout", 0.0)),
+            num_experts=int(cfg["moe_num_experts"]),
+            top_k=cfg.get("moe_top_k"),
+        )
+        print(f"[INFO] MoE-LoRA injected into {n_replaced} layers "
+              f"(experts={cfg['moe_num_experts']}, r={cfg['lora_r']})")
+        _print_params(model)
+    else:
+        lora_config = LoraConfig(
+            r=int(cfg["lora_r"]),
+            lora_alpha=int(cfg["lora_alpha"]),
+            lora_dropout=float(cfg["lora_dropout"]),
+            target_modules=cfg["target_modules"],
+            use_dora=bool(cfg.get("use_dora", False)),
+            bias="none",
+            task_type="CAUSAL_LM",
+        )
+        model = get_peft_model(model, lora_config)
+        if cfg.get("unfreeze_visual_merger", False):
+            model.model.visual.merger.to(torch.float32)
+            for param in model.model.visual.merger.parameters():
+                param.requires_grad = True
+            print("[INFO] Visual merger upcast to FP32 and unfrozen for direct fine-tuning")
+        model.print_trainable_parameters()
 
-    lora_config = LoraConfig(
-        r=int(cfg["lora_r"]),
-        lora_alpha=int(cfg["lora_alpha"]),
-        lora_dropout=float(cfg["lora_dropout"]),
-        target_modules=cfg["target_modules"],
-        bias="none",
-        task_type="CAUSAL_LM",
-    )
-    model = get_peft_model(model, lora_config)
-    model.print_trainable_parameters()
     model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
     model.enable_input_require_grads()
 
@@ -162,8 +206,9 @@ def main():
         per_device_train_batch_size=int(cfg["per_device_train_batch_size"]),
         gradient_accumulation_steps=int(cfg["gradient_accumulation_steps"]),
         learning_rate=float(cfg["learning_rate"]),
-        warmup_ratio=float(cfg["warmup_ratio"]),
+        warmup_steps=int(float(cfg["warmup_ratio"]) * int(cfg["max_steps"])),
         weight_decay=float(cfg["weight_decay"]),
+        lr_scheduler_type=cfg.get("lr_scheduler_type", "linear"),
         logging_steps=int(cfg["logging_steps"]),
         save_strategy="no",
         fp16=True,
@@ -188,7 +233,11 @@ def main():
 
     final_dir = os.path.join(cfg["output_dir"], "final")
     os.makedirs(final_dir, exist_ok=True)
-    trainer.save_model(final_dir)
+    if cfg.get("use_moe_lora", False):
+        from moe_lora import save_moe_lora
+        save_moe_lora(model, final_dir, cfg)
+    else:
+        trainer.save_model(final_dir)
     processor.save_pretrained(final_dir)
     with open(os.path.join(final_dir, "training_config.json"), "w", encoding="utf-8") as f:
         json.dump(cfg, f, indent=2, sort_keys=True)

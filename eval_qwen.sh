@@ -2,7 +2,7 @@
 set -euo pipefail
 
 export SEED=${SEED:-1}
-export MODEL_PATH=${MODEL_PATH:-/storage/data/shiyd2023/LLM_model/Qwen3-VL-2B-Instruct}
+export MODEL_PATH=${MODEL_PATH:-./models/Qwen3-VL-2B-Instruct}
 export MAX_PIXELS=${MAX_PIXELS:-200704}
 export MIN_PIXELS=${MIN_PIXELS:-100352}
 export USE_CACHE=${USE_CACHE:-false}

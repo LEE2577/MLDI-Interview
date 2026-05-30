@@ -1,14 +1,22 @@
-data/tokenizers
-__pycache__/
-.DS_Store
-modded-nanogpt/
-modded-nanogpt
-data/datasets
-data/prepared_*
-data/manifest.json
-data/docs_selected.jsonl
-.mypy_cache/
-.venv
-logs/
+# ── Large data & model files ──────────────────────────────────────────────────
+data/
+models/
+
+# ── Training outputs & evaluation results ─────────────────────────────────────
 outputs/
 results/
+logs/
+
+# ── Python cache ───────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.mypy_cache/
+
+# ── IDE / OS ───────────────────────────────────────────────────────────────────
+.vscode/
+.DS_Store
+
+# ── Virtual environment ────────────────────────────────────────────────────────
+.venv/
+venv/
