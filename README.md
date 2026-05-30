@@ -49,7 +49,7 @@ done
 | **Official LoRA baseline** (2×2080Ti, mean of 3 seeds) | **70.68%** | — |
 | Baseline LoRA (this repo, seed=1) | 70.51% | — |
 | + OCR deduplication | 70.52% | +0.01% |
-| **MoE-LoRA (OCR=false)** ✅ | **70.66%** | **+0.15%** |
+| **MoE-LoRA** ✅ | **70.66%** | **+0.15%** |
 
 ### Inference Throughput
 
